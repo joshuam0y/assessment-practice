@@ -67,8 +67,11 @@ Call it exactly once per round.
 
 **Puzzle generation must be solvable by construction.** Build the solution first,
 then pad with decoys. Never generate randomly and hope. Numerosity picks its
-solution set before the target; Pathfinder carves a DFS path before laying decoy
-tiles. Preserve that property in any change.
+solution set before the target; Pathfinder carves a DFS path, lays connectors in
+their final orientation, then scrambles by replaying real slide moves from that
+solved state (not rotation — every scrambled position is therefore reachable back
+to solved, same guarantee, different mechanism). Preserve that property in any
+change.
 
 ## Storage
 
@@ -94,13 +97,22 @@ Zetamac answers should always be positive integers.
 
 ## Known unknowns
 
-The mechanics come from published descriptions and screenshots of the real
-assessments, not from the assessments themselves. Timings, difficulty ramps, and
-scoring are approximations.
+The mechanics come from published descriptions, prep-vendor guides, and (for
+ShapeDance) HireVue's own screenshot reproduced in a peer-reviewed paper (Leutner,
+Codreanu, Brink & Bitsakis 2023, Frontiers in Psychology) — not from the real
+assessments directly. Two games were fully rebuilt after research contradicted the
+original guess, not just recalibrated: Pathfinder was a rotate-the-pipe puzzle, but
+the real game slides tiles into an open space (15-puzzle style); the game now called
+`shapedance.js` was a 5-card, 2x2-pattern "Compare" game, but the real one is called
+ShapeDance, uses 4 cards of 3x3 patterns, and has an independent checkerboard-tint
+decoy on each card. Zetamac was checked directly against its own public source code
+and is the most confident of the five — its number generation already matched
+before this research pass.
 
-`compare.js` is the least certain — the rule "find the two identical cards" is
-inferred from the layout and the button label. If the real game differs, that file
-is where to fix it.
+Remaining genuine unknowns: whether ShapeDance's real matching rule ever requires
+selecting more than two cards at higher levels (sources conflict), and Pathfinder's
+exact per-level grid-size increment beyond "starts 3x3, grows on success, shrinks on
+skip." If either turns out to differ, those are the files to fix.
 
 Personality and emotional-intelligence formats are deliberately excluded. Those
 reward familiarity, not rehearsal, and a trainer for them would teach someone to

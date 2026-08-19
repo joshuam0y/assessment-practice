@@ -6,8 +6,8 @@ step, no backend, no dependencies beyond one webfont.
 | Game | Skill | Clock |
 |---|---|---|
 | Numerosity | Mental arithmetic | 3 min + per-level timeout |
-| Compare | Visual comparison | 3 min + per-level timeout |
-| Pathfinder | Spatial reasoning | 3 min + per-level timeout |
+| ShapeDance | Mental rotation | 3.3 min + per-level timeout |
+| Pathfinder | Spatial reasoning (sliding puzzle) | 5 min, no per-level timeout |
 | Digitspan | Short-term memory | 3 min + per-level timeout |
 | Zetamac | Arithmetic speed | 2 min |
 
@@ -62,12 +62,17 @@ Adding a game: new file in `js/games/`, an entry in `AP.GAMES` in `core.js`, and
 
 ## Caveats
 
-Mechanics are reconstructed from published descriptions and screenshots of the real
-assessments, not from the assessments themselves. Timings and difficulty curves are
-approximations and should be corrected against the real thing.
-
-`compare.js` is the least certain — its rule is inferred from layout and button
-label rather than documentation.
+Mechanics are reconstructed from published descriptions, prep-vendor guides, and (for
+ShapeDance) HireVue's own screenshot reproduced in a peer-reviewed paper — not from
+the real assessments directly. Pathfinder was originally built as a rotate-the-pipe
+puzzle before research turned up that the real game is a sliding puzzle instead;
+ShapeDance was originally built as a 5-card, 2x2-pattern "Compare" game before
+research found the real one uses 4 cards with 3x3 patterns and a decoy background
+tint. Both were rebuilt to match. Remaining known uncertainty: whether ShapeDance's
+real matching rule is always exactly two cards or sometimes more, and the exact
+per-level grid-size increment for Pathfinder beyond "starts at 3x3, grows on
+success." Zetamac's mechanics were checked directly against its own public source
+and are the most confident of the five.
 
 Personality and emotional-intelligence formats are deliberately excluded.
 

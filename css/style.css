@@ -141,14 +141,32 @@ h2 {
 .hexwrap.on { transform: translate(-50%, -50%) scale(1.08); }
 .hexwrap.on svg { filter: brightness(1.3); }
 
-/* compare cards */
+/* ShapeDance cards -- a 3x3 pattern on a checkerboard tile whose color is a
+   pure decoy independent of the pattern match (confirmed from HireVue's own
+   published screenshot: two cards sit on a white/grey board, two on an
+   orange/tan one, unrelated to which cards actually match). Cards drift and
+   rotate continuously ("rotated, AND ROTATING" per HireVue's own game
+   description -- the name is literally ShapeDance), with the wobble range
+   widening at higher levels via the --wob custom property. */
 .card {
-  position: absolute; width: 84px; height: 84px; border-radius: 6px;
-  background: #F3E4C8; box-shadow: 0 4px 10px rgba(0, 0, 0, .35);
-  display: grid; grid-template-columns: 1fr 1fr; padding: 8px; gap: 4px;
+  position: absolute; width: 96px; height: 96px; border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .35);
+  display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px; gap: 3px;
+  animation: card-dance 3.4s ease-in-out infinite;
+  --wob: 8deg;
 }
+.card.bg-a { background-image: repeating-conic-gradient(#F3E4C8 0% 25%, #E4D2AC 0% 50%); background-size: 16px 16px; }
+.card.bg-b { background-image: repeating-conic-gradient(#F0C99A 0% 25%, #E0A868 0% 50%); background-size: 16px 16px; }
 .card.sel { box-shadow: 0 0 0 4px #FFD84D, 0 4px 10px rgba(0, 0, 0, .35); }
 .card svg { width: 100%; height: 100%; display: block; }
+@keyframes card-dance {
+  0%   { transform: rotate(calc(var(--wob) * -1)); }
+  50%  { transform: rotate(var(--wob)); }
+  100% { transform: rotate(calc(var(--wob) * -1)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+}
 .cta {
   background: #fff; color: #23262E; font-size: 17px; font-weight: 600;
   letter-spacing: .06em; padding: 16px; margin: 10px; border-radius: 4px; flex: none;

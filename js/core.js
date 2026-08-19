@@ -17,8 +17,8 @@ var AP = {
 AP.GAMES = {
   num: { name: 'Numerosity', tag: 'Arithmetic', col: '#F5A623', unit: 'solved',
     desc: 'Tap hexes that hit the target using the operation shown. Escalates through all four operations.' },
-  cmp: { name: 'Compare', tag: 'Visual comparison', col: '#D881F0', unit: 'matched',
-    desc: 'Find the two cards with identical shape patterns, then compare.' },
+  sd: { name: 'ShapeDance', tag: 'Mental rotation', col: '#D881F0', unit: 'matched',
+    desc: 'Cards drift and rotate. Tap the two with an identical pattern, then press COMPARE.' },
   pf: { name: 'Pathfinder', tag: 'Spatial', col: '#7FD4FF', unit: 'connected',
     desc: 'Slide tiles into the open space to connect the amber terminals. Grid grows 3\u00D73 to 5\u00D75.' },
   ds: { name: 'Digitspan', tag: 'Short-term memory', col: '#4ECDC4', unit: 'recalled',
@@ -134,6 +134,7 @@ AP.hexSVG = function (label, col, small) {
 
 /* Scatter positions keyed by tile count, as [left%, top%]. */
 AP.LAY = {
+  4: [[28, 24], [72, 22], [26, 70], [72, 72]],
   5: [[28, 18], [70, 16], [50, 42], [26, 70], [70, 72]],
   6: [[26, 14], [70, 15], [50, 37], [24, 60], [72, 60], [48, 82]],
   8: [[24, 12], [62, 11], [42, 29], [78, 31], [22, 50], [58, 51], [36, 72], [72, 74]],
