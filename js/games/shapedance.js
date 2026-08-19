@@ -1,29 +1,50 @@
-/* shapedance.js — four cards, each a 3x3 pattern, exactly two identical.
-   Select both, press COMPARE.
+/* shapedance.js — cards on a fixed lattice, each a 3x3 pattern with some
+   cells left blank, exactly two identical. Select both, press COMPARE.
 
-   Renamed and rebuilt from the earlier "compare.js". Research finding: the
-   real HireVue game is called ShapeDance -- COMPARE is only the on-screen
-   button label, which is why candidates misremember it as "Compare".
-   Confirmed directly against HireVue's own published screenshot (Leutner,
-   Codreanu, Brink & Bitsakis 2023, Frontiers in Psychology, Table 2,
-   "Reproduced with permission from HireVue Inc."): four tilted, drifting
-   cards, a 3x3 pattern per card (not 2x2), two different checkerboard
-   background tints spread across the cards independent of which patterns
-   match (a pure decoy), a single COMPARE button, and no "no match" option.
-   HireVue's own description: "Mental rotation task that requires players
-   to identify matching patterns of increasing complexity in rotated, AND
-   ROTATING, stimuli" -- the cards are meant to keep moving, hence the name.
+   Frame-measured against three real HireVue gameplay recordings (ffmpeg +
+   blob/angle tracking on actual footage, not vendor prose or a screenshot).
+   This replaced an earlier version built from a single published screenshot
+   plus prep-vendor text, which got several things wrong once checked against
+   real play:
+
+   - Motion: NOT floating/drifting/shaking. Every card has a fixed random
+     tilt (measured 3-87 degrees) baked in once, no animation. Only from
+     LEVEL 22 on does a subset of cards additionally spin continuously at
+     constant angular velocity (measured 5-35 deg/s, most commonly ~25.8),
+     each with its own randomized direction -- no oscillation, no easing,
+     no reversal. Confirmed by HireVue's own in-game instruction text
+     captured from footage: "Complexity increases as you progress through
+     the levels... and some cubes will rotate."
+   - Layout: a FIXED 2-column x 3-row lattice (6 slots). Cards never
+     translate; positional jitter measured at 0.01-0.46px over 12s, i.e.
+     pinned in place.
+   - Card count: 3-6 (not always 4), shifting from mostly 3-4 early to 4-6
+     from around level 10 on, capped at the 6 lattice slots.
+   - Pattern: always a 3x3 grid, but NOT always fully filled -- filled-cell
+     count escalates 2 -> 3 -> 4 -> 5-6 -> 6-7 (out of 9) as level rises.
+   - Shape/color variety: 1 combo early, 2 from ~level 10, all 3 (square,
+     triangle, circle) from ~level 18.
+   - Level: +2 per correct match, -1 per miss or timeout.
+   - Timing: 200s total session, ~30s per-level timeout (measured 31.7s).
+   - Background tile tint (white/grey vs tan/orange checkerboard) and card
+     SIZE are both independent decoys unrelated to which cards match.
 
    Scoring in the real game is reported as max level reached times win
-   ratio, which penalizes rushing through levels without actually being
-   right. Kept "matched" as the primary score for consistency with every
-   other game's personal-best tracking, but the level x win-ratio figure
-   is shown on the results screen too. */
+   ratio, which penalizes rushing without accuracy. Kept "matched" as the
+   primary score for consistency with every other game's personal-best
+   tracking, but level x win-ratio is shown on the results screen too. */
 
 (function () {
-  var SHAPES = ['circle', 'square', 'triangle'];
-  var COLORS = ['#D3202A', '#1E5FBF', '#E8901A'];
-  var SD_TIME = 198; // HireVue's published duration for this game is 3.3 minutes
+  var TYPE_POOL = [
+    { s: 'square', c: '#1E5FBF' },
+    { s: 'triangle', c: '#E8901A' },
+    { s: 'circle', c: '#D3202A' }
+  ];
+  var SD_TIME = 200;
+  var SD_LEVEL_TIME = 30;
+  var SD_ROTATION_LEVEL = 22;
+  /* Fixed 2x3 lattice -- [left%, top%] for each of the 6 slots. */
+  var LATTICE = [[30, 16], [70, 16], [30, 50], [70, 50], [30, 84], [70, 84]];
 
   function mark(shape, color) {
     if (shape === 'circle') {
@@ -35,47 +56,65 @@
     return '<svg viewBox="0 0 30 30"><path d="M15 3 L27 26 L3 26 Z" fill="' + color + '"/></svg>';
   }
 
-  function randomPattern() {
-    var p = [];
-    for (var i = 0; i < 9; i++) p.push({ s: AP.pick(SHAPES), c: AP.pick(COLORS) });
+  function fillCountForLevel(level) {
+    if (level < 10) return 2;
+    if (level < 14) return 3;
+    if (level < 18) return 4;
+    if (level < 22) return AP.ri(5, 6);
+    return AP.ri(6, 7);
+  }
+
+  function typesForLevel(level) {
+    if (level < 10) return TYPE_POOL.slice(0, 1);
+    if (level < 18) return TYPE_POOL.slice(0, 2);
+    return TYPE_POOL;
+  }
+
+  function cardCountForLevel(level) {
+    return level < 10 ? AP.ri(3, 4) : AP.ri(4, 6);
+  }
+
+  function randomPattern(fillCount, types) {
+    var p = [], filled = {};
+    AP.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, fillCount).forEach(function (i) { filled[i] = 1; });
+    for (var i = 0; i < 9; i++) p.push(filled[i] ? AP.pick(types) : null);
     return p;
   }
 
   function identical(a, b) {
-    return a.every(function (x, i) { return x.s === b[i].s && x.c === b[i].c; });
+    return a.every(function (x, i) {
+      if (x === null || b[i] === null) return x === b[i];
+      return x.s === b[i].s && x.c === b[i].c;
+    });
   }
 
   function build() {
     var S = AP.S;
-    var base = randomPattern();
+    var fillCount = fillCountForLevel(S.level);
+    var types = typesForLevel(S.level);
+    var numCards = Math.min(6, cardCountForLevel(S.level));
+    var base = randomPattern(fillCount, types);
     var pats = [base, base.slice()];
     var guard = 0;
-    while (pats.length < 4 && guard++ < 200) {
-      var p = randomPattern();
+    while (pats.length < numCards && guard++ < 200) {
+      var p = randomPattern(fillCount, types);
       if (!identical(p, base)) pats.push(p);
     }
-    while (pats.length < 4) pats.push(randomPattern());
+    while (pats.length < numCards) pats.push(randomPattern(fillCount, types));
 
-    var order = AP.shuffle([0, 1, 2, 3]);
+    var order = AP.shuffle(pats.map(function (_, i) { return i; }));
     S.pats = order.map(function (i) { return pats[i]; });
     S.match = [];
     S.pats.forEach(function (p, i) { if (identical(p, base)) S.match.push(i); });
-    /* Background tile tint is an independent coin flip per card -- a pure
-       visual decoy unrelated to which cards actually match. */
     S.bg = S.pats.map(function () { return AP.pick(['bg-a', 'bg-b']); });
+    S.slots = AP.shuffle([0, 1, 2, 3, 4, 5]).slice(0, numCards);
     S.sel = [];
     draw();
   }
 
   function draw() {
-    var S = AP.S, lay = AP.LAY[4];
-    /* Rotation range AND shake jitter both widen with level, and the shake
-       speeds up too -- "increasing complexity in rotated, and rotating,
-       stimuli" per HireVue's own description, plus this practice tool's own
-       shake on top since a slow smooth pendulum didn't read as "dancing". */
-    var wob = Math.min(28, 8 + S.level * 1.4);
-    var jit = Math.min(10, 2 + S.level * 0.6);
-    var speed = Math.max(0.9, 1.7 - S.level * 0.06);
+    var S = AP.S;
+    var canSpin = S.level >= SD_ROTATION_LEVEL;
     AP.el(AP.board(AP.chrome(true) +
       '<div class="field f-cmp"><div class="cmpwrap" id="cw"></div>' +
       '<button class="cta" id="cCta" disabled>COMPARE</button></div>'));
@@ -83,15 +122,23 @@
 
     var cw = AP.$('cw');
     S.pats.forEach(function (p, i) {
+      var pos = LATTICE[S.slots[i]];
+      var tilt = AP.ri(-70, 70);
+      var scale = AP.pick([0.85, 1, 1.15]);
       var d = document.createElement('button');
       d.className = 'card ' + S.bg[i];
-      d.style.left = 'calc(' + lay[i][0] + '% - 48px)';
-      d.style.top = 'calc(' + lay[i][1] + '% - 48px)';
-      d.style.setProperty('--wob', wob + 'deg');
-      d.style.setProperty('--jit', jit + 'px');
-      d.style.animationDuration = speed + 's';
-      d.style.animationDelay = (-Math.random() * speed) + 's';
-      d.innerHTML = p.map(function (m) { return mark(m.s, m.c); }).join('');
+      d.style.left = 'calc(' + pos[0] + '% - 48px)';
+      d.style.top = 'calc(' + pos[1] + '% - 48px)';
+      d.style.setProperty('--tilt', tilt + 'deg');
+      d.style.setProperty('--scale', scale);
+      /* Only from level 22 does any card actually spin, per real footage --
+         constant velocity, own random direction, no oscillation. */
+      if (canSpin && Math.random() < 0.5) {
+        var dps = AP.ri(5, 35);
+        d.classList.add(AP.pick(['spin-cw', 'spin-ccw']));
+        d.style.animationDuration = (360 / dps) + 's';
+      }
+      d.innerHTML = p.map(function (m) { return m ? mark(m.s, m.c) : '<span class="blank"></span>'; }).join('');
       d.addEventListener('click', function () { tap(i, d); });
       cw.appendChild(d);
     });
@@ -115,7 +162,7 @@
 
     var ok = S.sel.slice().sort().join() === S.match.slice().sort().join();
     S.attempts++;
-    if (ok) { S.score++; S.level++; } else { S.miss++; S.level = Math.max(1, S.level - 1); }
+    if (ok) { S.score++; S.level += 2; } else { S.miss++; S.level = Math.max(1, S.level - 1); }
 
     var c = AP.$('cCta');
     c.textContent = ok ? 'MATCH' : 'NOT A MATCH';
@@ -127,7 +174,7 @@
     var S = AP.S;
     if (S.left <= 0) return;
     S.locked = false;
-    S.lvlMax = Math.max(8, 18 - Math.floor(S.level / 4));
+    S.lvlMax = SD_LEVEL_TIME;
     build();
     AP.levelClock(function () { S.miss++; S.attempts++; S.level = Math.max(1, S.level - 1); next(); });
   }
@@ -137,17 +184,17 @@
     var winRatio = S.attempts ? S.score / S.attempts : 0;
     AP.results('sd', S.score,
       [['Matched', S.score], ['Level', S.level], ['Level × win rate', (S.level * winRatio).toFixed(1)]],
-      '<b>Strategy:</b> compare one grid position at a time across all four cards rather than reading each card ' +
-      'whole — the cards keep drifting, so a full read gets stale before you finish it. Scan the top-left ' +
-      'cell on every card, discard the ones that differ, then move on. The background tile color is a decoy; ' +
-      'only the pattern matters. HireVue reportedly scores this as level reached times win rate, so guessing to ' +
-      'reach a higher level fast is worse than answering carefully.',
+      '<b>Strategy:</b> compare one grid position at a time across all cards rather than reading each one whole. ' +
+      'Early rounds only fill 2 of 9 cells, so check those first. Background tile color and card size are both ' +
+      'decoys; only the pattern matters. Rotation only starts at level 22 -- until then, everything you see is ' +
+      'exactly what it is, just tilted. HireVue reportedly scores this as level reached times win rate, so ' +
+      'guessing to climb levels fast is worse than answering carefully.',
       start);
   }
 
   function start() {
     AP.stopAll();
-    AP.S = { score: 0, miss: 0, attempts: 0, level: 1, sel: [], locked: false, left: SD_TIME, lvlMax: 18 };
+    AP.S = { score: 0, miss: 0, attempts: 0, level: 1, sel: [], locked: false, left: SD_TIME, lvlMax: SD_LEVEL_TIME };
     next();
     AP.gameClock(finish, SD_TIME);
   }

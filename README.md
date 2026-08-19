@@ -7,7 +7,7 @@ step, no backend, no dependencies beyond one webfont.
 |---|---|---|
 | Numerosity | Mental arithmetic | 3 min + per-level timeout |
 | ShapeDance | Mental rotation | 3.3 min + per-level timeout |
-| Pathfinder | Spatial reasoning (sliding puzzle) | 5 min, no per-level timeout |
+| Pathfinder | Spatial reasoning (sliding puzzle) | 5 min + ~60s per-level timeout |
 | Digitspan | Short-term memory | 3 min + per-level timeout |
 | Zetamac | Arithmetic speed | 2 min |
 
