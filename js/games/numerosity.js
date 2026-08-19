@@ -63,6 +63,7 @@
     AP.el(AP.board(AP.chrome(true) +
       '<div class="panels">' +
       '<div class="panel"><div class="cap">Operation</div><div class="opdot">' + q.op + '</div></div>' +
+      '<div class="panel"><div class="cap">Current</div><div class="big" id="cur">&mdash;</div></div>' +
       '<div class="panel"><div class="cap">Result</div><div class="big">' + q.target + '</div></div>' +
       '</div><div class="field f-num"><div class="scatter" id="sc"></div></div>'));
     AP.wire();
@@ -89,6 +90,9 @@
     else { S.sel.push(i); node.classList.add('on'); }
 
     var v = runningValue();
+    var cur = AP.$('cur');
+    if (cur) cur.textContent = v === null ? '—' : v;
+
     if (S.sel.length >= 2 && v !== null && Math.abs(v - S.q.target) < 1e-9) {
       S.locked = true;
       S.score++;

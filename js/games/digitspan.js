@@ -8,11 +8,15 @@
   var LETTERS = 'ABCDEFGHIJKLMNOP'.split('');
   var SHOW_MS = 720;
 
-  /* Four rows of four, odd rows offset — a honeycomb. [left%, top%] */
+  /* Four rows of four, odd rows offset — a honeycomb. [left%, top%]
+     The stagger must be split evenly across both row types (+/-5, not
+     0/+10) or the whole grid leans toward whichever side gets the full
+     offset -- confirmed visually shifted right before this fix. */
   function honeycomb() {
     var pos = [];
     for (var r = 0; r < 4; r++) {
-      for (var i = 0; i < 4; i++) pos.push([19 + i * 21 + (r % 2 ? 10 : 0), 16 + r * 23]);
+      var rowOffset = r % 2 ? 5 : -5;
+      for (var i = 0; i < 4; i++) pos.push([19 + i * 21 + rowOffset, 16 + r * 23]);
     }
     return pos;
   }
