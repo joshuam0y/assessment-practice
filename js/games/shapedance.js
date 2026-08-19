@@ -69,9 +69,13 @@
 
   function draw() {
     var S = AP.S, lay = AP.LAY[4];
-    /* Wobble range widens with level -- "increasing complexity in rotated,
-       and rotating, stimuli" per HireVue's own description. */
+    /* Rotation range AND shake jitter both widen with level, and the shake
+       speeds up too -- "increasing complexity in rotated, and rotating,
+       stimuli" per HireVue's own description, plus this practice tool's own
+       shake on top since a slow smooth pendulum didn't read as "dancing". */
     var wob = Math.min(28, 8 + S.level * 1.4);
+    var jit = Math.min(10, 2 + S.level * 0.6);
+    var speed = Math.max(0.9, 1.7 - S.level * 0.06);
     AP.el(AP.board(AP.chrome(true) +
       '<div class="field f-cmp"><div class="cmpwrap" id="cw"></div>' +
       '<button class="cta" id="cCta" disabled>COMPARE</button></div>'));
@@ -84,7 +88,9 @@
       d.style.left = 'calc(' + lay[i][0] + '% - 48px)';
       d.style.top = 'calc(' + lay[i][1] + '% - 48px)';
       d.style.setProperty('--wob', wob + 'deg');
-      d.style.animationDuration = (3.8 - Math.min(1.6, S.level * 0.08)) + 's';
+      d.style.setProperty('--jit', jit + 'px');
+      d.style.animationDuration = speed + 's';
+      d.style.animationDelay = (-Math.random() * speed) + 's';
       d.innerHTML = p.map(function (m) { return mark(m.s, m.c); }).join('');
       d.addEventListener('click', function () { tap(i, d); });
       cw.appendChild(d);
