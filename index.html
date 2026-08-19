@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assessment Practice</title>
+  <meta name="description" content="Timed practice drills for pre-employment cognitive assessments.">
+  <meta name="theme-color" content="#0E1120">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="site">
+    <div class="in">
+      <div class="brand">Assessment <span>practice</span></div>
+      <nav>
+        <button id="navGames">Games</button>
+        <button id="navStats">Stats</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="shell" id="main"></div>
+
+  <!-- Load order matters: core defines AP, games register onto it, app boots. -->
+  <script src="js/core.js"></script>
+  <script src="js/games/numerosity.js"></script>
+  <script src="js/games/compare.js"></script>
+  <script src="js/games/pathfinder.js"></script>
+  <script src="js/games/digitspan.js"></script>
+  <script src="js/games/zetamac.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
