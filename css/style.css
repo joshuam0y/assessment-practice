@@ -158,8 +158,13 @@ h2 {
 /* pathfinder -- flush tiles, no gap, so a connector crossing a cell boundary
    reads as one continuous pipe instead of breaking at a visible seam. */
 .pgrid { display: grid; gap: 0; padding: 10px; flex: none; }
-.pcell { aspect-ratio: 1; background: #1565C0; outline: 1px solid rgba(0,0,0,.15); }
+.pcell {
+  aspect-ratio: 1; background: #1565C0; outline: 1px solid rgba(0,0,0,.15);
+  transition: background .12s ease, transform .12s ease; cursor: pointer;
+}
 .pcell.lit { background: #7E8894; }
+.pcell.empty { background: #38343A; outline: none; cursor: default; }
+.pcell.slidable:hover { transform: scale(0.96); }
 .pcell svg { width: 100%; height: 100%; display: block; }
 .pcell svg line { transition: stroke .15s ease; }
 

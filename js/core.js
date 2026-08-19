@@ -20,7 +20,7 @@ AP.GAMES = {
   cmp: { name: 'Compare', tag: 'Visual comparison', col: '#D881F0', unit: 'matched',
     desc: 'Find the two cards with identical shape patterns, then compare.' },
   pf: { name: 'Pathfinder', tag: 'Spatial', col: '#7FD4FF', unit: 'connected',
-    desc: 'Rotate tiles to connect the amber terminals. Grid grows 3\u00D73 to 5\u00D75.' },
+    desc: 'Slide tiles into the open space to connect the amber terminals. Grid grows 3\u00D73 to 5\u00D75.' },
   ds: { name: 'Digitspan', tag: 'Short-term memory', col: '#4ECDC4', unit: 'recalled',
     desc: 'Watch the sequence, tap it back on the honeycomb. Backward recall from span 5.' },
   z: { name: 'Zetamac', tag: 'Mental math', col: '#9BE564', unit: 'correct',
@@ -66,15 +66,22 @@ AP.board = function (inner) {
     '<div class="board">' + inner + '</div>';
 };
 
-AP.chrome = function (showGameTime) {
+/* showLevelTimeout defaults true so the other four games are unaffected.
+   Pathfinder passes false: the real HireVue game runs one 5-minute clock
+   with no per-puzzle timer, so a level-timeout bar would misrepresent it. */
+AP.chrome = function (showGameTime, showLevelTimeout) {
+  if (showLevelTimeout === undefined) showLevelTimeout = true;
   return '<div class="bar"><div class="top">' +
     '<button class="pause" id="bPause" aria-label="Quit"><i></i><i></i></button>' +
     '<div class="lvl">Level<b id="cLvl">1</b></div>' +
     (showGameTime
       ? '<div class="gt">Game Time<b id="cGT">' + AP.mmss(AP.GAME_TIME) + '</b></div>'
       : '<div style="width:26px"></div>') +
-    '</div><div class="tolabel">Level Timeout</div>' +
-    '<div class="tobar"><span id="cTO"></span></div></div>';
+    '</div>' +
+    (showLevelTimeout
+      ? '<div class="tolabel">Level Timeout</div><div class="tobar"><span id="cTO"></span></div>'
+      : '') +
+    '</div>';
 };
 
 AP.wire = function () {
@@ -85,9 +92,14 @@ AP.wire = function () {
   if (e) e.textContent = AP.S.level;
 };
 
-/* Total round clock. Fires onEnd once. */
-AP.gameClock = function (onEnd) {
-  AP.S.left = AP.GAME_TIME;
+/* Total round clock. Fires onEnd once. duration overrides AP.GAME_TIME for
+   games that don't run the default 3 minutes (Pathfinder's real 5-minute
+   single timer). Repaints #cGT immediately so the very first frame shows
+   the right duration instead of the 3:00 default for one tick. */
+AP.gameClock = function (onEnd, duration) {
+  AP.S.left = duration || AP.GAME_TIME;
+  var e0 = AP.$('cGT');
+  if (e0) e0.textContent = AP.mmss(AP.S.left);
   AP.gt = setInterval(function () {
     AP.S.left--;
     var e = AP.$('cGT');
