@@ -18,7 +18,7 @@ AP.GAMES = {
   num: { name: 'Numerosity', tag: 'Arithmetic', col: '#F5A623', unit: 'solved',
     desc: 'Tap hexes that hit the target using the operation shown. Escalates through all four operations.' },
   sd: { name: 'ShapeDance', tag: 'Mental rotation', col: '#D881F0', unit: 'matched',
-    desc: 'Cards drift and rotate. Tap the two with an identical pattern, then press COMPARE.' },
+    desc: 'Tap every card with an identical pattern (usually 2, sometimes more), then press COMPARE.' },
   pf: { name: 'Pathfinder', tag: 'Spatial', col: '#7FD4FF', unit: 'connected',
     desc: 'Slide tiles into the open space to connect the amber terminals. Grid grows 3\u00D73 to 5\u00D75.' },
   ds: { name: 'Digitspan', tag: 'Short-term memory', col: '#4ECDC4', unit: 'recalled',

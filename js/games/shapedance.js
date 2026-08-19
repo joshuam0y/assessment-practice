@@ -32,7 +32,15 @@
    Scoring in the real game is reported as max level reached times win
    ratio, which penalizes rushing without accuracy. Kept "matched" as the
    primary score for consistency with every other game's personal-best
-   tracking, but level x win-ratio is shown on the results screen too. */
+   tracking, but level x win-ratio is shown on the results screen too.
+
+   Match count: the frame-measured footage above only ever showed exactly
+   one matching pair per round. Per explicit correction from someone who's
+   actually taken the real assessment recently, later rounds sometimes have
+   3 or 4 cards that all match each other, not just 2 -- selection is no
+   longer capped at 2, and matchCountForLevel() below escalates the odds of
+   a 3- or 4-way match as level rises (always leaving at least one
+   non-matching decoy card, so there's still a real discrimination task). */
 
 (function () {
   var TYPE_POOL = [
@@ -74,6 +82,16 @@
     return level < 10 ? AP.ri(3, 4) : AP.ri(4, 6);
   }
 
+  /* min(desired, numCards - 1) always leaves at least one card that has to
+     be ruled out -- without that floor, a round with only 4-5 cards could
+     occasionally ask the player to just select every card on screen. */
+  function matchCountForLevel(level, numCards) {
+    var desired = 2;
+    if (level >= 22 && Math.random() < 0.25) desired = 4;
+    else if (level >= 14 && Math.random() < 0.35) desired = 3;
+    return Math.min(desired, numCards - 1);
+  }
+
   function randomPattern(fillCount, types) {
     var p = [], filled = {};
     AP.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, fillCount).forEach(function (i) { filled[i] = 1; });
@@ -93,8 +111,10 @@
     var fillCount = fillCountForLevel(S.level);
     var types = typesForLevel(S.level);
     var numCards = Math.min(6, cardCountForLevel(S.level));
+    var matchCount = matchCountForLevel(S.level, numCards);
     var base = randomPattern(fillCount, types);
-    var pats = [base, base.slice()];
+    var pats = [];
+    for (var m = 0; m < matchCount; m++) pats.push(base.slice());
     var guard = 0;
     while (pats.length < numCards && guard++ < 200) {
       var p = randomPattern(fillCount, types);
@@ -150,13 +170,13 @@
     if (S.locked) return;
     var at = S.sel.indexOf(i);
     if (at > -1) { S.sel.splice(at, 1); node.classList.remove('sel'); }
-    else if (S.sel.length < 2) { S.sel.push(i); node.classList.add('sel'); }
-    AP.$('cCta').disabled = S.sel.length !== 2;
+    else { S.sel.push(i); node.classList.add('sel'); }
+    AP.$('cCta').disabled = S.sel.length < 2;
   }
 
   function check() {
     var S = AP.S;
-    if (S.sel.length !== 2 || S.locked) return;
+    if (S.sel.length < 2 || S.locked) return;
     S.locked = true;
     clearInterval(AP.lt);
 
@@ -187,8 +207,10 @@
       '<b>Strategy:</b> compare one grid position at a time across all cards rather than reading each one whole. ' +
       'Early rounds only fill 2 of 9 cells, so check those first. Background tile color and card size are both ' +
       'decoys; only the pattern matters. Rotation only starts at level 22 -- until then, everything you see is ' +
-      'exactly what it is, just tilted. HireVue reportedly scores this as level reached times win rate, so ' +
-      'guessing to climb levels fast is worse than answering carefully.',
+      'exactly what it is, just tilted. Later rounds sometimes have 3 or 4 cards that all match instead of just ' +
+      '2, so select every card you think matches before pressing COMPARE, not just the first two. HireVue ' +
+      'reportedly scores this as level reached times win rate, so guessing to climb levels fast is worse than ' +
+      'answering carefully.',
       start);
   }
 
